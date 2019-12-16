@@ -7,6 +7,7 @@ import { fromEvent, noop } from 'rxjs';
 import { concatMap, distinctUntilChanged, exhaustMap, filter, mergeMap, tap } from 'rxjs/operators';
 import { fromPromise } from 'rxjs/internal-compatibility';
 import { Store } from '../common/store.service';
+import { saveCourse } from '../../../server/save-course.route';
 
 @Component({
     selector: 'course-dialog',
@@ -42,11 +43,12 @@ export class CourseDialogComponent implements OnInit, AfterViewInit {
 
     ngOnInit(): void {
         this.form.valueChanges
-            .pipe(filter(() => this.form.valid))
+            .pipe(
+              filter(() => this.form.valid),
+              concatMap(changes => this.saveCourse(changes)))
             .subscribe(changes => {
-                const saveCourse$ = this.saveCourse(changes);
-
-                saveCourse$.subscribe();
+                console.log(changes);
+                console.log('shamala`madingdong');
             });
     }
 
@@ -60,7 +62,11 @@ export class CourseDialogComponent implements OnInit, AfterViewInit {
         }));
     }
     ngAfterViewInit() {
-
+        fromEvent(this.saveButton.nativeElement, 'click')
+            .pipe(
+                exhaustMap(() => this.saveCourse(this.form.value))
+            )
+            .subscribe();
     }
 
     save() {
@@ -70,9 +76,6 @@ export class CourseDialogComponent implements OnInit, AfterViewInit {
                 err => console.log("Error saving course", err)
             );
     }
-
-
-
 
     close() {
         this.dialogRef.close();
